@@ -9,6 +9,8 @@ namespace Employee_Management.APIModel
         {
             CreateMap<Department, APIDepartment>()
                   .ReverseMap();
+            CreateMap<Employee, APIEmployee>()
+                  .ReverseMap();
         }
     }
 }

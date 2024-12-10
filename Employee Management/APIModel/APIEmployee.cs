@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace Employee_Management.Model
+namespace Employee_Management.APIModel
 {
-    public class Employee
+    public class APIEmployee
     {
-        public int EmployeeId { get; set; }
         public string EmployeeName { get; set; }
         public DateTime? DateofJoining { get; set; }
         public int DepartmentId { get; set; }

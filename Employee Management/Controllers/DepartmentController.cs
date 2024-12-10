@@ -8,6 +8,7 @@ using Employee_Management.Model;
 using System.Threading.Tasks;
 using Employee_Management.APIModel;
 using AutoMapper;
+using System.Collections;
 
 namespace Employee_Management.Controllers
 {
@@ -49,6 +50,45 @@ namespace Employee_Management.Controllers
                 Department department = _mapper.Map<Department>(apiDepartment);
                 Department response = await _department.Post(department);
                 return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("UpdateDepartment/{id:int}")]
+        public async Task<IActionResult> Update(int id,[FromBody] APIDepartment apiDepartment)
+        {
+            try
+            {
+                Department department = await _department.GetDepartmentById(id);
+                if(department == null)
+                {
+                    return BadRequest(new { code = "DEPARTMENT_NOT_FOUND", message = "Department does not exist.",statusCode = 400 });
+                }
+                department.DepartmentName = apiDepartment.DepartmentName;
+                department = await _department.UpdateDepartment(department);
+                return Ok(department);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Update(int id)
+        {
+            try
+            {
+                Department department = await _department.GetDepartmentById(id);
+                if (department == null)
+                {
+                    return BadRequest(new { code = "DEPARTMENT_NOT_FOUND", message = "Department does not exist.", statusCode = 400 });
+                }
+                department = await _department.DeleteDepartment(department);
+                return Ok();
             }
             catch (Exception ex)
             {

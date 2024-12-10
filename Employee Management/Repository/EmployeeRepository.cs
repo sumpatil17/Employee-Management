@@ -12,29 +12,32 @@ using System.Threading.Tasks;
 
 namespace Employee_Management.Repository
 {
-    public class DepartmentRepository : Repository<Department>,IDepartment
+    public class EmployeeRepository : IEmployee
     {
         public readonly EmployeeDBContext _db;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
-        public DepartmentRepository(EmployeeDBContext context) : base(context)
+        public EmployeeRepository(EmployeeDBContext context)
         { 
             _db = context;
         }
 
-        public async Task<List<Department>> Get()
+        public async Task<List<Employee>> Get()
         {
             try
             {
-                List<Department> department = await  _db.Department.
+                List<Employee> employees = await  _db.Employee.
                     Select
                     (
-                        d => new Department
+                       e => new Employee
                         {
-                           DepartmentId =  d.DepartmentId,
-                           DepartmentName =  d.DepartmentName
+                            EmployeeId = e.EmployeeId,
+                            EmployeeName = e.EmployeeName,
+                            DateofJoining = e.DateofJoining,
+                            DepartmentId =  e.DepartmentId,
+                           PhotoFileName = e.PhotoFileName,
                         }
                     ).ToListAsync();
-                return department;
+                return employees;
             }
             catch (Exception ex)
             {
@@ -43,13 +46,13 @@ namespace Employee_Management.Repository
             }
         }
 
-        public async Task<Department> Post(Department department)
+        public async Task<Employee> Post(Employee employee)
         {
             try
             {
-                _db.Department.Add(department);
+                _db.Employee.Add(employee);
                 await _db.SaveChangesAsync();
-                return department;
+                return employee;
             }
             catch (Exception ex)
             {
@@ -58,12 +61,12 @@ namespace Employee_Management.Repository
             }
         }
 
-        public async Task<Department> GetDepartmentById(int id)
+        public async Task<Employee> GetEmployeeById(int id)
         {
             try
             {
-                Department department = await _db.Department.Where(d=>d.DepartmentId == id).FirstOrDefaultAsync();
-                return department;
+                Employee employee = await _db.Employee.Where(d => d.EmployeeId == id).FirstOrDefaultAsync();
+                return employee;
             }
             catch (Exception ex)
             {
@@ -72,13 +75,13 @@ namespace Employee_Management.Repository
             }
         }
 
-        public async Task<Department> UpdateDepartment(Department department)
+        public async Task<Employee> UpdateEmployee(Employee employee)
         {
             try
             {
-                _db.Department.Update(department);
+                _db.Employee.Update(employee);
                 await _db.SaveChangesAsync();
-                return department;
+                return employee;
             }
             catch (Exception ex)
             {
@@ -87,20 +90,20 @@ namespace Employee_Management.Repository
             }
         }
 
-        public async Task<Department> DeleteDepartment(Department department)
-        {
-            try
-            {
-                _db.Department.Remove(department);
-                await _db.SaveChangesAsync();
-                return department;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex.Message.ToString());
-                return null;
-            }
-        }
+        //public async Task<Department> DeleteDepartment(Department department)
+        //{
+        //    try
+        //    {
+        //        _db.Department.Remove(department);
+        //        await _db.SaveChangesAsync();
+        //        return department;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.Error(ex.Message.ToString());
+        //        return null;
+        //    }
+        //}
 
 
     }

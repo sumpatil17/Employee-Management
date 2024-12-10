@@ -49,6 +49,7 @@ namespace Employee_Management
 
 
             services.AddScoped<IDepartment, DepartmentRepository>();
+            services.AddScoped<IEmployee, EmployeeRepository>();
             services.AddAutoMapper(typeof(AutoMapperProfile));
             services.AddControllers();
         }
