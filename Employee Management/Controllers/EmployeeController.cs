@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Employee_Management.APIModel;
 using AutoMapper;
 using System.Collections;
+using Employee_Management.Repository;
+using log4net;
 
 namespace Employee_Management.Controllers
 {
@@ -20,6 +22,7 @@ namespace Employee_Management.Controllers
         private readonly EmployeeDBContext _db;
         private readonly IEmployee _employee;
         private readonly IMapper _mapper;
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
         public EmployeeController(IConfiguration configuration, EmployeeDBContext context,IEmployee employee, IMapper mapper)
         {
             _configuration = configuration;
@@ -65,7 +68,13 @@ namespace Employee_Management.Controllers
                 Employee employee = await _employee.GetEmployeeById(id);
                 if (employee == null)
                 {
-                    return BadRequest(new { code = "EMPLOYEE_NOT_FOUND", message = "Employee does not exist.", statusCode = 400 });
+                    _logger.Error($"Employee with ID {id} not found.");
+                    return NotFound(new
+                    {
+                        code = "EMPLOYEE_NOT_FOUND",
+                        message = $"Employee with ID {id} does not exist.",
+                        statusCode = 404
+                    });
                 }
                 employee.EmployeeName = apiEmployee.EmployeeName;
                 employee.DateofJoining = apiEmployee.DateofJoining;
@@ -80,24 +89,30 @@ namespace Employee_Management.Controllers
             }
         }
 
-        //[HttpDelete("{id:int}")]
-        //public async Task<IActionResult> Update(int id)
-        //{
-        //    try
-        //    {
-        //        Department department = await _department.GetDepartmentById(id);
-        //        if (department == null)
-        //        {
-        //            return BadRequest(new { code = "DEPARTMENT_NOT_FOUND", message = "Department does not exist.", statusCode = 400 });
-        //        }
-        //        department = await _department.DeleteDepartment(department);
-        //        return Ok();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                Employee employee = await _employee.GetEmployeeById(id);
+                if (employee == null)
+                {
+                    _logger.Error($"Employee with ID {id} not found.");
+                    return NotFound(new
+                    {
+                        code = "EMPLOYEE_NOT_FOUND",
+                        message = $"Employee with ID {id} does not exist.",
+                        statusCode = 404
+                    });
+                }
+                employee = await _employee.DeleteEmployee(employee);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
     }
 }

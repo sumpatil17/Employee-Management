@@ -11,5 +11,6 @@ namespace Employee_Management.Repository.Interface
         Task<Department> GetDepartmentById(int id);
         Task<Department> UpdateDepartment(Department department);
         Task<Department> DeleteDepartment(Department department);
+        Task<bool> CheckDepartmentDependency(int id);
     }
 }

@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Employee_Management.APIModel;
 using AutoMapper;
 using System.Collections;
+using Employee_Management.Repository;
+using log4net;
 
 namespace Employee_Management.Controllers
 {
@@ -20,6 +22,7 @@ namespace Employee_Management.Controllers
         private readonly EmployeeDBContext _db;
         private readonly IDepartment _department;
         private readonly IMapper _mapper;
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
         public DepartmentController(IConfiguration configuration, EmployeeDBContext context,IDepartment department, IMapper mapper)
         {
             _configuration = configuration;
@@ -65,7 +68,13 @@ namespace Employee_Management.Controllers
                 Department department = await _department.GetDepartmentById(id);
                 if(department == null)
                 {
-                    return BadRequest(new { code = "DEPARTMENT_NOT_FOUND", message = "Department does not exist.",statusCode = 400 });
+                    _logger.Error($"Attempt to delete non-existent department with ID {id}");
+                    return NotFound(new
+                    {
+                        code = "DEPARTMENT_NOT_FOUND",
+                        message = $"Department with ID {id} does not exist.",
+                        statusCode = 404
+                    });
                 }
                 department.DepartmentName = apiDepartment.DepartmentName;
                 department = await _department.UpdateDepartment(department);
@@ -85,7 +94,24 @@ namespace Employee_Management.Controllers
                 Department department = await _department.GetDepartmentById(id);
                 if (department == null)
                 {
-                    return BadRequest(new { code = "DEPARTMENT_NOT_FOUND", message = "Department does not exist.", statusCode = 400 });
+                    _logger.Error($"Attempt to delete non-existent department with ID {id}");
+                    return NotFound(new
+                    {
+                        code = "DEPARTMENT_NOT_FOUND",
+                        message = $"Department with ID {id} does not exist.",
+                        statusCode = 404
+                    });
+                }
+                bool isDependencyExist = await _department.CheckDepartmentDependency(id);
+                if (isDependencyExist)
+                {
+                    _logger.Error($"Attempt to delete department with ID {id} failed due to employee dependencies.");
+                    return Conflict(new
+                    {
+                        code = "DEPARTMENT_DEPENDENCY",
+                        message = $"The department with ID {id} cannot be deleted because employees are associated with it.",
+                        statusCode = 409
+                    });
                 }
                 department = await _department.DeleteDepartment(department);
                 return Ok();
