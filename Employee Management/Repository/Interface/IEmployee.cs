@@ -10,6 +10,6 @@ namespace Employee_Management.Repository.Interface
         Task<Employee> Post(Employee employee);
         Task<Employee> GetEmployeeById(int id);
         Task<Employee> UpdateEmployee(Employee employee);
-        //Task<Department> DeleteDepartment(Department department);
+        Task<Employee> DeleteEmployee(Employee employee);
     }
 }

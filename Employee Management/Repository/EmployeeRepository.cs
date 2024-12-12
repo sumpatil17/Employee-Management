@@ -90,20 +90,20 @@ namespace Employee_Management.Repository
             }
         }
 
-        //public async Task<Department> DeleteDepartment(Department department)
-        //{
-        //    try
-        //    {
-        //        _db.Department.Remove(department);
-        //        await _db.SaveChangesAsync();
-        //        return department;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.Error(ex.Message.ToString());
-        //        return null;
-        //    }
-        //}
+        public async Task<Employee> DeleteEmployee(Employee employee)
+        {
+            try
+            {
+                _db.Employee.Remove(employee);
+                await _db.SaveChangesAsync();
+                return employee;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
+                return null;
+            }
+        }
 
 
     }

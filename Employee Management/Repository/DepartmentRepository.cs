@@ -102,6 +102,20 @@ namespace Employee_Management.Repository
             }
         }
 
+        public async Task<bool> CheckDepartmentDependency(int id)
+        {
+            try
+            {
+                bool isExist = await _db.Employee.Where(d => d.DepartmentId == id).AnyAsync();
+                return isExist;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
+                return true;
+            }
+        }
+
 
     }
 }
