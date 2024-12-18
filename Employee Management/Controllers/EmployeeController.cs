@@ -11,6 +11,8 @@ using AutoMapper;
 using System.Collections;
 using Employee_Management.Repository;
 using log4net;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Employee_Management.Controllers
 {
@@ -23,6 +25,7 @@ namespace Employee_Management.Controllers
         private readonly IEmployee _employee;
         private readonly IMapper _mapper;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
+        private readonly string _uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
         public EmployeeController(IConfiguration configuration, EmployeeDBContext context,IEmployee employee, IMapper mapper)
         {
             _configuration = configuration;
@@ -37,7 +40,7 @@ namespace Employee_Management.Controllers
             try
             {
                 List<Employee> employee = await _employee.Get();
-                return new JsonResult(employee);
+                return Ok(employee);
             }
             catch (Exception ex)
             {
@@ -52,10 +55,16 @@ namespace Employee_Management.Controllers
             {
                 Employee employee = _mapper.Map<Employee>(apiEmployee);
                 Employee response = await _employee.Post(employee);
-                return Ok(response);
+                return Ok(new
+                {
+                    Code = "EMPLOYEE_ADDED",
+                    Message = "Employee added successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -81,10 +90,16 @@ namespace Employee_Management.Controllers
                 employee.DepartmentId = apiEmployee.DepartmentId;
                 employee.PhotoFileName = apiEmployee.PhotoFileName;
                 employee = await _employee.UpdateEmployee(employee);
-                return Ok(employee);
+                return Ok(new
+                {
+                    Code = "EMPLOYEE_UPDATED",
+                    Message = "Employee updated successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -106,10 +121,53 @@ namespace Employee_Management.Controllers
                     });
                 }
                 employee = await _employee.DeleteEmployee(employee);
-                return Ok();
+                return Ok(new
+                {
+                    Code = "EMPLOYEE_DELETED",
+                    Message = "Employee deleted successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("UploadFile")]
+        public async Task<IActionResult> UploadFile(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new
+                    {
+                        Code = "NO_FILE",
+                        Message = "No file uploaded",
+                        StatusCode = 400
+                    });
+
+                string fileName = Path.GetRandomFileName() + Path.GetExtension(file.FileName);
+
+                if (!Directory.Exists(_uploadFolder))
+                {
+                    Directory.CreateDirectory(_uploadFolder);
+                }
+
+                string filePath = Path.Combine(_uploadFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                string relativePath = Path.Combine(fileName);
+                return Ok(new { FilePath = relativePath });
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }

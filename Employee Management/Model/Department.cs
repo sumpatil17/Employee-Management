@@ -1,4 +1,6 @@
-﻿namespace Employee_Management.Model
+﻿using Newtonsoft.Json;
+
+namespace Employee_Management.Model
 {
     public class Department
     {

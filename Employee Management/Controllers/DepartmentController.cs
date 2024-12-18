@@ -11,6 +11,9 @@ using AutoMapper;
 using System.Collections;
 using Employee_Management.Repository;
 using log4net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Employee_Management.Controllers
 {
@@ -23,6 +26,7 @@ namespace Employee_Management.Controllers
         private readonly IDepartment _department;
         private readonly IMapper _mapper;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
+        
         public DepartmentController(IConfiguration configuration, EmployeeDBContext context,IDepartment department, IMapper mapper)
         {
             _configuration = configuration;
@@ -37,10 +41,11 @@ namespace Employee_Management.Controllers
             try
             {
                 List<Department> departments = await _department.Get();
-                return new JsonResult(departments);
+                return Ok(departments);
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -52,10 +57,16 @@ namespace Employee_Management.Controllers
             {
                 Department department = _mapper.Map<Department>(apiDepartment);
                 Department response = await _department.Post(department);
-                return Ok(response);
+                return Ok(new
+                {
+                    Code = "DEPARTMENT_ADDED",
+                    Message = "Department added successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -78,10 +89,16 @@ namespace Employee_Management.Controllers
                 }
                 department.DepartmentName = apiDepartment.DepartmentName;
                 department = await _department.UpdateDepartment(department);
-                return Ok(department);
+                return Ok(new
+                {
+                    Code = "DEPARTMENT_UPDATED",
+                    Message = "Department updated successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -114,13 +131,21 @@ namespace Employee_Management.Controllers
                     });
                 }
                 department = await _department.DeleteDepartment(department);
-                return Ok();
+                return Ok(new
+                {
+                    Code = "DEPARTMENT_DELETED",
+                    Message = "Department deleted successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        
 
     }
 }
