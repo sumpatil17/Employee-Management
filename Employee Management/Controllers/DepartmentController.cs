@@ -50,6 +50,21 @@ namespace Employee_Management.Controllers
             }
         }
 
+        [HttpGet("GetDepartmentList/{page:int?}/{pageSize:int?}/{search?}")]
+        public async Task<IActionResult> GetDepartmentList(int page ,int pageSize,string search)
+        {
+            try
+            {
+                APIDepartmentList departments = await _department.GetDepartmentList(page,pageSize,search);
+                return Ok(departments);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("AddDepartment")]
         public async Task<IActionResult> Post([FromBody] APIDepartment apiDepartment)
         {
@@ -123,10 +138,10 @@ namespace Employee_Management.Controllers
                 if (isDependencyExist)
                 {
                     _logger.Error($"Attempt to delete department with ID {id} failed due to employee dependencies.");
-                    return Conflict(new
+                    return BadRequest(new
                     {
                         code = "DEPARTMENT_DEPENDENCY",
-                        message = $"The department with ID {id} cannot be deleted because employees are associated with it.",
+                        message = $"The department with name {department.DepartmentName} cannot be deleted because employees are associated with it.",
                         statusCode = 409
                     });
                 }

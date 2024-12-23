@@ -25,7 +25,7 @@ namespace Employee_Management.Controllers
         private readonly IEmployee _employee;
         private readonly IMapper _mapper;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
-        private readonly string _uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedFiles");
+        private readonly string _uploadFolder = "D:\\Enthral\\Project\\Employee_Management\\src\\assets\\UploadedFiles";
         public EmployeeController(IConfiguration configuration, EmployeeDBContext context,IEmployee employee, IMapper mapper)
         {
             _configuration = configuration;
@@ -44,6 +44,21 @@ namespace Employee_Management.Controllers
             }
             catch (Exception ex)
             {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("GetEmployeeList/{page:int?}/{pageSize:int?}/{search?}")]
+        public async Task<IActionResult> GetEmployeeList(int page, int pageSize, string search)
+        {
+            try
+            {
+                APIEmployeeList employee = await _employee.GetEmployeeList(page, pageSize, search);
+                return Ok(employee);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }

@@ -34,10 +34,57 @@ namespace Employee_Management.Repository
                             EmployeeName = e.EmployeeName,
                             DateofJoining = e.DateofJoining,
                             DepartmentId =  e.DepartmentId,
-                           PhotoFileName = e.PhotoFileName,
+                            PhotoFileName = e.PhotoFileName,
                         }
                     ).ToListAsync();
                 return employees;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
+                return null;
+            }
+        }
+
+        public async Task<APIEmployeeList> GetEmployeeList(int page, int pageSize, string search)
+        {
+            try
+            {
+                APIEmployeeList employeeListCount = new APIEmployeeList();
+                List<APIEmployee> employee = await _db.Employee.
+                    Select
+                    (
+                        d => new APIEmployee
+                        {
+                            Id = d.EmployeeId, 
+                            EmployeeName = d.EmployeeName,
+                            DateofJoining = d.DateofJoining,
+                            DepartmentId = d.DepartmentId,
+                            PhotoFileName = d.PhotoFileName,
+                            DepartmentName = _db.Department.Where(a=>a.DepartmentId == d.DepartmentId).Select(a=>a.DepartmentName).FirstOrDefault()
+                        }
+                    ).OrderByDescending(r => r.DepartmentId).ToListAsync();
+
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    employee = employee
+                   .Where(r => (r.EmployeeName ?? string.Empty).ToLower().Contains(search.ToLower()))
+                   .ToList();
+                }
+
+                employeeListCount.Count = employee.Count();
+
+                if (page != -1)
+                    employee = employee.Skip((page - 1) * pageSize).ToList();
+
+                if (pageSize != -1)
+                    employee = employee.Take(pageSize).ToList();
+
+
+                employeeListCount.List = employee.ToList();
+
+                return employeeListCount;
             }
             catch (Exception ex)
             {
