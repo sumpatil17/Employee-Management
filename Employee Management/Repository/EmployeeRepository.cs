@@ -1,5 +1,6 @@
 ﻿using Employee_Management.APIModel;
 using Employee_Management.Data;
+using Employee_Management.Helper;
 using Employee_Management.Model;
 using Employee_Management.Repository.Interface;
 using log4net;
@@ -14,11 +15,15 @@ namespace Employee_Management.Repository
 {
     public class EmployeeRepository : IEmployee
     {
+        private readonly IConfiguration _configuration;
         public readonly EmployeeDBContext _db;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
-        public EmployeeRepository(EmployeeDBContext context)
+        private readonly string DefaultPassword;
+        public EmployeeRepository(IConfiguration configuration, EmployeeDBContext context)
         { 
+            _configuration = configuration;
             _db = context;
+            DefaultPassword = _configuration["DefaultPassword"];
         }
 
         public async Task<List<Employee>> Get()
@@ -56,14 +61,14 @@ namespace Employee_Management.Repository
                     (
                         d => new APIEmployee
                         {
-                            Id = d.EmployeeId, 
+                            EmployeeId = d.EmployeeId, 
                             EmployeeName = d.EmployeeName,
-                            DateofJoining = d.DateofJoining,
+                            DoJInFormat = d.DateofJoining.HasValue ? d.DateofJoining.Value.ToString("dd MMM yyyy") : null,
                             DepartmentId = d.DepartmentId,
                             PhotoFileName = d.PhotoFileName,
                             DepartmentName = _db.Department.Where(a=>a.DepartmentId == d.DepartmentId).Select(a=>a.DepartmentName).FirstOrDefault()
                         }
-                    ).OrderByDescending(r => r.DepartmentId).ToListAsync();
+                    ).OrderByDescending(r => r.EmployeeId).ToListAsync();
 
 
                 if (!string.IsNullOrEmpty(search))
@@ -97,6 +102,10 @@ namespace Employee_Management.Repository
         {
             try
             {
+                string hashedPassword = PasswordHelper.GenerateHashedPassword(DefaultPassword);
+                employee.Password = hashedPassword;
+                employee.AccountCreatedDate = DateTime.Now;
+                employee.IsPasswordUpdated = false;
                 _db.Employee.Add(employee);
                 await _db.SaveChangesAsync();
                 return employee;

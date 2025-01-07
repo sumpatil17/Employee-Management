@@ -13,27 +13,33 @@ using Employee_Management.Repository;
 using log4net;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Configuration;
+using Employee_Management.Helper;
+using Newtonsoft.Json;
+using System.Security.Principal;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Employee_Management.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class EmployeeController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly EmployeeDBContext _db;
         private readonly IEmployee _employee;
         private readonly IMapper _mapper;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
-        private readonly string _uploadFolder = "D:\\Enthral\\Project\\Employee_Management\\src\\assets\\UploadedFiles";
-        public EmployeeController(IConfiguration configuration, EmployeeDBContext context,IEmployee employee, IMapper mapper)
+        private readonly string _uploadFolder;
+
+        public EmployeeController(IConfiguration configuration,IEmployee employee, IMapper mapper)
         {
             _configuration = configuration;
-            _db = context;
             _employee = employee;
             _mapper = mapper;
+            _uploadFolder = _configuration["ImageUploadFolder"];
         }
-
+       
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -155,6 +161,7 @@ namespace Employee_Management.Controllers
         {
             try
             {
+               
                 if (file == null || file.Length == 0)
                     return BadRequest(new
                     {
@@ -186,6 +193,67 @@ namespace Employee_Management.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
+        [HttpPost("UpdatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromBody] Credentials credentials)
+        {
+            try
+            {
+
+                var authorizationHeader = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+                {
+                    return Unauthorized(new { message = "Authorization header is missing or invalid" });
+                }
+
+                var token = authorizationHeader.Substring("Bearer ".Length);
+
+                // Get the EmployeeId from the token
+                int? employeeId = JwtTokenHelper.GetEmployeeIdFromToken(token, _configuration);
+
+                if (employeeId == null)
+                {
+                    return Unauthorized(new { message = "Invalid token or EmployeeId not found" });
+                }
+
+                string decryptedPayload = EncryptionHelper.Decrypt(credentials.Credential);
+                var passwordChangeRequest = JsonConvert.DeserializeObject<PasswordChangeRequest>(decryptedPayload);
+
+                Employee employee = await _employee.GetEmployeeById((int)employeeId);
+
+                if (employee == null)
+                {
+                    return NotFound(new { message = "User not found", IsSuccessful = false });
+                }
+
+                bool isOldPasswordCorrect = PasswordHelper.VerifyPassword(passwordChangeRequest.OldPassword, employee.Password);
+                if (!isOldPasswordCorrect)
+                {
+                    return BadRequest(new { message = "Old password is not correct", IsSuccessful = false });
+                }
+
+                string newHashedPassword = PasswordHelper.GenerateHashedPassword(passwordChangeRequest.NewPassword);
+
+
+                employee.Password = newHashedPassword;
+                employee.IsPasswordUpdated = true;
+                employee = await _employee.UpdateEmployee(employee);
+                return Ok(new
+                {
+                    Code = "PASSWORD_UPDATED",
+                    Message = "Password updated successfully.",
+                    StatusCode = 200
+                });
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
 
     }
 }
