@@ -39,8 +39,9 @@ namespace Employee_Management.Controllers
             {
                 string decryptedPayload = EncryptionHelper.Decrypt(credentials.Credential);
                 var creds = JsonConvert.DeserializeObject<Cred>(decryptedPayload);
+                creds.UserId = EncryptionHelper.Encrypt(creds.UserId);
 
-                Employee employee =await _identity.GetStoredPasswordHash(creds.UserName);
+                Employee employee =await _identity.GetStoredPasswordHash(creds.UserId);
                 bool isPasswordCorrect = PasswordHelper.VerifyPassword(creds.Password, employee.Password);
                 if(isPasswordCorrect)
                 {

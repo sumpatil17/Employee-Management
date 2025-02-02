@@ -24,6 +24,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
 using Microsoft.Extensions.Options;
+using Employee_Management.Middleware;
 
 namespace Employee_Management
 {
@@ -58,6 +59,8 @@ namespace Employee_Management
             services.AddScoped<IDepartment, DepartmentRepository>();
             services.AddScoped<IEmployee, EmployeeRepository>();
             services.AddScoped<IIdentity, IdentityRepository>();
+            services.AddScoped<IRoles, RolesRepository>();
+            services.AddScoped<IProject, ProjectsRepository>();
             services.AddAutoMapper(typeof(AutoMapperProfile));
             
             services.AddControllers();
@@ -121,7 +124,7 @@ namespace Employee_Management
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
+            app.UseMiddleware<EmployeeIdMiddleware>();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

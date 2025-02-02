@@ -6,6 +6,6 @@ namespace Employee_Management.Repository.Interface
 {
     public interface IIdentity
     {
-        Task<Employee> GetStoredPasswordHash(string username);
+        Task<Employee> GetStoredPasswordHash(string userId);
     }
 }

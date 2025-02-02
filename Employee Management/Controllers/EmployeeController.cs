@@ -75,6 +75,11 @@ namespace Employee_Management.Controllers
             try
             {
                 Employee employee = _mapper.Map<Employee>(apiEmployee);
+
+                employee.UserId = EncryptionHelper.Encrypt(employee.UserId);
+                employee.EmailId = EncryptionHelper.Encrypt(employee.EmailId);
+                employee.MobileNo = EncryptionHelper.Encrypt(employee.MobileNo);
+
                 Employee response = await _employee.Post(employee);
                 return Ok(new
                 {
@@ -107,6 +112,9 @@ namespace Employee_Management.Controllers
                     });
                 }
                 employee.EmployeeName = apiEmployee.EmployeeName;
+                employee.UserId = EncryptionHelper.Encrypt(apiEmployee.UserId); ;
+                employee.EmailId = EncryptionHelper.Encrypt(apiEmployee.EmailId); ;
+                employee.MobileNo = EncryptionHelper.Encrypt(apiEmployee.MobileNo); ;
                 employee.DateofJoining = apiEmployee.DateofJoining;
                 employee.DepartmentId = apiEmployee.DepartmentId;
                 employee.PhotoFileName = apiEmployee.PhotoFileName;
@@ -201,20 +209,9 @@ namespace Employee_Management.Controllers
             try
             {
 
-                var authorizationHeader = Request.Headers["Authorization"].ToString();
-                if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+                if (!(HttpContext.Items["EmployeeId"] is int employeeId))
                 {
-                    return Unauthorized(new { message = "Authorization header is missing or invalid" });
-                }
-
-                var token = authorizationHeader.Substring("Bearer ".Length);
-
-                // Get the EmployeeId from the token
-                int? employeeId = JwtTokenHelper.GetEmployeeIdFromToken(token, _configuration);
-
-                if (employeeId == null)
-                {
-                    return Unauthorized(new { message = "Invalid token or EmployeeId not found" });
+                    return Unauthorized(new { message = "EmployeeId not found in the token" });
                 }
 
                 string decryptedPayload = EncryptionHelper.Decrypt(credentials.Credential);
@@ -249,11 +246,41 @@ namespace Employee_Management.Controllers
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
 
+        [HttpGet("GetLoggedInUserDetails")]
+        public async Task<IActionResult> GetLoggedInUserDetails()
+        {
+            try
+            {
 
+                if (!(HttpContext.Items["EmployeeId"] is int employeeId))
+                {
+                    return Unauthorized(new { message = "EmployeeId not found in the token" });
+                }
+
+                Employee employee = await _employee.GetEmployeeById(employeeId);
+
+                if (employee == null)
+                {
+                    return NotFound(new { message = "Employee not found" });
+                }
+
+                return Ok(new
+                {
+                    EmployeeName =  employee.EmployeeName,
+                    PhotoFileName = employee.PhotoFileName         
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
     }
 }

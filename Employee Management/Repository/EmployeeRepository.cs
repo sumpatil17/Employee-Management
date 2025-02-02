@@ -66,7 +66,11 @@ namespace Employee_Management.Repository
                             DoJInFormat = d.DateofJoining.HasValue ? d.DateofJoining.Value.ToString("dd MMM yyyy") : null,
                             DepartmentId = d.DepartmentId,
                             PhotoFileName = d.PhotoFileName,
-                            DepartmentName = _db.Department.Where(a=>a.DepartmentId == d.DepartmentId).Select(a=>a.DepartmentName).FirstOrDefault()
+                            DepartmentName = _db.Department.Where(a=>a.DepartmentId == d.DepartmentId).Select(a=>a.DepartmentName).FirstOrDefault(),
+                            UserId  = EncryptionHelper.Decrypt(d.UserId),
+                            EmailId = EncryptionHelper.Decrypt(d.EmailId),
+                            MobileNo = EncryptionHelper.Decrypt(d.MobileNo)
+                        
                         }
                     ).OrderByDescending(r => r.EmployeeId).ToListAsync();
 

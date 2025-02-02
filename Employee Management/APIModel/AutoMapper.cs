@@ -11,6 +11,10 @@ namespace Employee_Management.APIModel
                   .ReverseMap();
             CreateMap<Employee, APIEmployee>()
                   .ReverseMap();
+            CreateMap<Roles, APIRoles>()
+                  .ReverseMap();
+            CreateMap<Projects, APIProjects>()
+                  .ReverseMap();
         }
     }
 }

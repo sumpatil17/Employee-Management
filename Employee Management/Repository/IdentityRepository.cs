@@ -24,11 +24,11 @@ namespace Employee_Management.Repository
             _db = context;
         }
 
-        public async Task<Employee> GetStoredPasswordHash(string username)
+        public async Task<Employee> GetStoredPasswordHash(string userId)
         {
             try
             {
-                Employee pw = await _db.Employee.Where(e => e.EmployeeName == username).FirstOrDefaultAsync();           
+                Employee pw = await _db.Employee.Where(e => e.UserId == userId).FirstOrDefaultAsync();           
                 return pw;
             }
             catch (Exception ex)
