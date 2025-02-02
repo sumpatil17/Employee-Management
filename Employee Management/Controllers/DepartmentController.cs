@@ -11,11 +11,16 @@ using AutoMapper;
 using System.Collections;
 using Employee_Management.Repository;
 using log4net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Employee_Management.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DepartmentController : ControllerBase
     {
         private readonly IConfiguration _configuration;
@@ -23,6 +28,7 @@ namespace Employee_Management.Controllers
         private readonly IDepartment _department;
         private readonly IMapper _mapper;
         private static readonly ILog _logger = LogManager.GetLogger(typeof(DepartmentRepository));
+        
         public DepartmentController(IConfiguration configuration, EmployeeDBContext context,IDepartment department, IMapper mapper)
         {
             _configuration = configuration;
@@ -37,10 +43,26 @@ namespace Employee_Management.Controllers
             try
             {
                 List<Department> departments = await _department.Get();
-                return new JsonResult(departments);
+                return Ok(departments);
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("GetDepartmentList/{page:int?}/{pageSize:int?}/{search?}")]
+        public async Task<IActionResult> GetDepartmentList(int page ,int pageSize,string search)
+        {
+            try
+            {
+                APIDepartmentList departments = await _department.GetDepartmentList(page,pageSize,search);
+                return Ok(departments);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -52,10 +74,16 @@ namespace Employee_Management.Controllers
             {
                 Department department = _mapper.Map<Department>(apiDepartment);
                 Department response = await _department.Post(department);
-                return Ok(response);
+                return Ok(new
+                {
+                    Code = "DEPARTMENT_ADDED",
+                    Message = "Department added successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -78,10 +106,16 @@ namespace Employee_Management.Controllers
                 }
                 department.DepartmentName = apiDepartment.DepartmentName;
                 department = await _department.UpdateDepartment(department);
-                return Ok(department);
+                return Ok(new
+                {
+                    Code = "DEPARTMENT_UPDATED",
+                    Message = "Department updated successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -106,21 +140,29 @@ namespace Employee_Management.Controllers
                 if (isDependencyExist)
                 {
                     _logger.Error($"Attempt to delete department with ID {id} failed due to employee dependencies.");
-                    return Conflict(new
+                    return BadRequest(new
                     {
                         code = "DEPARTMENT_DEPENDENCY",
-                        message = $"The department with ID {id} cannot be deleted because employees are associated with it.",
+                        message = $"The department with name {department.DepartmentName} cannot be deleted because employees are associated with it.",
                         statusCode = 409
                     });
                 }
                 department = await _department.DeleteDepartment(department);
-                return Ok();
+                return Ok(new
+                {
+                    Code = "DEPARTMENT_DELETED",
+                    Message = "Department deleted successfully.",
+                    StatusCode = 200
+                });
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.Message.ToString());
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        
 
     }
 }
